@@ -1,6 +1,6 @@
 {
   "name": "UbuntuTahoeSpotlight",
-  "description": "macOS Tahoe-style Spotlight search for apps, calculations, and system actions (Super + Alt + F)",
+  "description": "macOS Tahoe-style Spotlight search for apps, calculations, and system actions",
   "uuid": "UbuntuTahoeSpotlight@adfoxtheme.github.io",
   "settings-schema": "org.gnome.shell.extensions.ubuntutahoespotlight",
   "shell-version": [
