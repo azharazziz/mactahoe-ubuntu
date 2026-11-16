@@ -140,3 +140,43 @@
 .tahoe-clip-scrollbar StWidget:active {
     background-color: st-darken(-st-accent-color, 10%) !important;
 }
+
+/* Keep text and controls readable when the shell uses a light color scheme. */
+.tahoe-clipboard-light .tahoe-clip-header-title,
+.tahoe-clipboard-light .tahoe-clip-menu-item,
+.tahoe-clipboard-light .tahoe-clip-label,
+.tahoe-clipboard-light .tahoe-clip-item-icon {
+    color: #242424;
+}
+
+.tahoe-clipboard-light .tahoe-clip-search-entry {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #242424;
+}
+
+.tahoe-clipboard-light .tahoe-clip-search-entry StLabel.hint-text {
+    color: rgba(0, 0, 0, 0.55);
+}
+
+.tahoe-clipboard-light .tahoe-clip-search-entry:focus {
+    background-color: rgba(0, 0, 0, 0.09);
+}
+
+.tahoe-clipboard-light .tahoe-clip-delete-btn {
+    color: #333333;
+}
+
+.tahoe-clipboard-light .tahoe-clip-delete-btn:hover {
+    background-color: rgba(0, 0, 0, 0.10);
+}
+
+.tahoe-clipboard-light .tahoe-clip-delete-btn:active {
+    background-color: rgba(0, 0, 0, 0.16);
+}
+
+.tahoe-clipboard-light .tahoe-clip-trough,
+.tahoe-clipboard-light .tahoe-clip-scrollview #trough,
+.tahoe-clipboard-light .tahoe-clip-scrollbar #trough {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}

@@ -103,6 +103,7 @@ class ClipboardIndicator extends PanelMenu.Button {
 
         this._extension = extension;
         this._settings = extension.getSettings();
+        this._interfaceSettings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this._historyPath = HISTORY_PATH;
         this._lastCopiedText = null;
         this._history = this._loadHistory();
@@ -116,6 +117,15 @@ class ClipboardIndicator extends PanelMenu.Button {
 
         // Build Popup Menu
         this._buildMenu();
+        this._updateColorScheme();
+        this._colorSchemeChangedId = this._interfaceSettings.connect(
+            'changed::color-scheme',
+            () => this._updateColorScheme()
+        );
+        this._themeChangedId = St.ThemeContext.get_for_stage(global.stage).connect(
+            'changed',
+            () => this._updateColorScheme()
+        );
 
         // Listen for Global Clipboard Changes
         const selection = global.display.get_selection();
@@ -225,6 +235,18 @@ class ClipboardIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(this._listSection);
 
         this._renderItems('');
+    }
+
+    _updateColorScheme() {
+        const styleVariant = Main.getStyleVariant();
+        const isDark = styleVariant === 'dark' ||
+            (styleVariant !== 'light' && this._interfaceSettings.get_string('color-scheme') === 'prefer-dark');
+
+        if (isDark) {
+            this.menu.actor.remove_style_class_name('tahoe-clipboard-light');
+        } else {
+            this.menu.actor.add_style_class_name('tahoe-clipboard-light');
+        }
     }
 
     _renderItems(filterQuery = '') {
@@ -380,12 +402,22 @@ class ClipboardIndicator extends PanelMenu.Button {
     destroy() {
         this._unbindShortcut();
 
+        if (this._colorSchemeChangedId) {
+            this._interfaceSettings.disconnect(this._colorSchemeChangedId);
+            this._colorSchemeChangedId = null;
+        }
+        if (this._themeChangedId) {
+            St.ThemeContext.get_for_stage(global.stage).disconnect(this._themeChangedId);
+            this._themeChangedId = null;
+        }
+
         if (this._selectionOwnerChangedId) {
             const selection = global.display.get_selection();
             selection.disconnect(this._selectionOwnerChangedId);
             this._selectionOwnerChangedId = null;
         }
 
+        this._interfaceSettings = null;
         super.destroy();
     }
 });
