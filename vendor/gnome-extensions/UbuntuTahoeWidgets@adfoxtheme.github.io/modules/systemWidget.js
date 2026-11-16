@@ -63,13 +63,7 @@ class SystemWidget extends St.DrawingArea {
         const hasGpu = !!(m.gpu && m.gpu.hasGpu);
         const height = hasGpu ? 300 : 258;
 
-        // Card Background
-        Drawing.drawCard(
-            cr, 0, 0, width, height, 26,
-            [0.13, 0.13, 0.16, 0.95],
-            [0.065, 0.065, 0.085, 0.97],
-            0.15
-        );
+        Drawing.drawLiquidGlassCard(cr, 0, 0, width, height, 26);
 
         const language = getLanguage(this._settings);
         Drawing.drawText(cr, 22, 33, textFor(language, 'Hệ thống', 'System'), 14, Drawing.COLORS.sysText, true, 'left', 'SF Pro Display');

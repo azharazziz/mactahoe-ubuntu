@@ -26,6 +26,11 @@
       <summary>Show lunar calendar widget</summary>
       <description>Show or hide the Vietnamese lunar calendar widget.</description>
     </key>
+    <key name="show-calendar" type="b">
+      <default>true</default>
+      <summary>Show Gregorian calendar widget</summary>
+      <description>Show or hide the Gregorian calendar and public holiday widget.</description>
+    </key>
     <key name="show-rest" type="b">
       <default>true</default>
       <summary>Show break reminder widget</summary>
@@ -56,6 +61,11 @@
       <default>15</default>
       <summary>Weather update interval (minutes)</summary>
       <description>How often to refresh weather data automatically.</description>
+    </key>
+    <key name="holiday-country" type="s">
+      <default>'VN'</default>
+      <summary>Public holiday country</summary>
+      <description>Country code used to load public holidays for the Gregorian calendar.</description>
     </key>
 
     <key name="position-mode" type="s">
@@ -102,6 +112,16 @@
       <default>614</default>
       <summary>Individual lunar vertical position</summary>
       <description>Distance from the top edge of the desktop to the lunar widget in individual mode.</description>
+    </key>
+    <key name="widget-calendar-x" type="i">
+      <default>20</default>
+      <summary>Individual calendar horizontal position</summary>
+      <description>Distance from the right edge of the desktop to the Gregorian calendar widget in individual mode.</description>
+    </key>
+    <key name="widget-calendar-y" type="i">
+      <default>950</default>
+      <summary>Individual calendar vertical position</summary>
+      <description>Distance from the top edge of the desktop to the Gregorian calendar widget in individual mode.</description>
     </key>
     <key name="widget-rest-x" type="i">
       <default>20</default>

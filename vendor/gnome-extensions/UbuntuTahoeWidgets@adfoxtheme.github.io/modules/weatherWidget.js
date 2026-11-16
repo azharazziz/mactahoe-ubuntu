@@ -12,7 +12,7 @@ class WeatherWidget extends St.DrawingArea {
     _init(settings) {
         super._init({
             width: 340,
-            height: 210,
+            height: 236,
             reactive: true,
             track_hover: true,
         });
@@ -82,48 +82,64 @@ class WeatherWidget extends St.DrawingArea {
     _onRepaint(area) {
         const cr = area.get_context();
         const width = 340;
-        const height = 210;
+        Drawing.drawLiquidGlassCard(cr, 0, 0, width, 236, 26);
 
-        // Card background with blue gradient and sheen
-        Drawing.drawCard(
-            cr, 0, 0, width, height, 26,
-            [0.10, 0.30, 0.62, 0.97],
-            [0.34, 0.63, 0.96, 0.97],
-            0.20
-        );
-
-        // Halo circle behind icon
-        cr.setSourceRGBA(1, 1, 1, 0.07);
-        cr.arc(width - 72, 64, 52, 0, 2 * Math.PI);
-        cr.fill();
-
-        // Weather text
         const d = this._weatherData;
         const language = getLanguage(this._settings);
-        Drawing.drawText(cr, 22, 33, d.city || 'Hà Nội', 14, Drawing.COLORS.white, true, 'left', 'SF Pro Display');
-        Drawing.drawText(cr, 22, 50, d.date || '', 9, Drawing.COLORS.weatherSub, false, 'left');
+        const forecasts = (d.hourlyForecast || []).slice(0, 6);
+        const label = textFor(language, 'Theo giờ', 'Hourly forecast');
+        Drawing.drawText(cr, 20, 27, d.city || 'Hà Nội', 14, Drawing.COLORS.white, true, 'left', 'SF Pro Display');
+        Drawing.drawText(cr, 20, 43, d.date || '', 8.5, Drawing.COLORS.weatherMuted, false, 'left');
+        Drawing.drawText(cr, 20, 99, `${d.temp || '--'}°`, 48, Drawing.COLORS.white, true, 'left', 'SF Pro Display');
+        Drawing.drawText(cr, 20, 117, d.condition || textFor(language, 'Đang tải…', 'Loading…'), 10, Drawing.COLORS.weatherSub, false);
 
-        Drawing.drawText(cr, 22, 111, (d.temp || '--') + '°', 52, Drawing.COLORS.white, true, 'left', 'SF Pro Display');
-        Drawing.drawText(cr, 22, 132, d.condition || textFor(language, 'Đang tải…', 'Loading…'), 11.5, Drawing.COLORS.weatherSub, false);
-
+        Drawing.drawImage(cr, d.iconPath, width - 80, 29, 48);
         Drawing.drawText(
-            cr, 22, 154,
-            `${textFor(language, 'C:', 'H:')}${d.high || '--'}°    ${textFor(language, 'T:', 'L:')}${d.low || '--'}°`,
-            10, Drawing.COLORS.weatherSub, false
+            cr, width - 18, 87,
+            `${textFor(language, 'C:', 'H:')}${d.high || '--'}°  ${textFor(language, 'T:', 'L:')}${d.low || '--'}°`,
+            9, Drawing.COLORS.weatherSub, false, 'right'
         );
 
-        Drawing.drawText(
-            cr, 22, 174,
-            language === 'vi'
-                ? `Cảm giác ${d.feels || '--'}°   •   Độ ẩm ${d.humidity || '--'}%   •   Gió ${d.wind || '--'} km/h`
-                : `Feels ${d.feels || '--'}°   •   Humidity ${d.humidity || '--'}%   •   Wind ${d.wind || '--'} km/h`,
-            8.2, Drawing.COLORS.weatherMuted, false
-        );
+        cr.setSourceRGBA(1, 1, 1, 0.12);
+        cr.setLineWidth(1);
+        cr.moveTo(20, 127);
+        cr.lineTo(width - 20, 127);
+        cr.stroke();
+        Drawing.drawText(cr, 20, 140, label, 8, Drawing.COLORS.weatherMuted, false);
 
-        // Icon
-        if (d.iconPath) {
-            Drawing.drawImage(cr, d.iconPath, width - 122, 16, 96);
+        const forecastWidth = (width - 40) / 6;
+        for (let index = 0; index < 6; index++) {
+            const forecast = forecasts[index];
+            const centerX = 20 + forecastWidth * (index + 0.5);
+            Drawing.drawText(
+                cr, centerX, 157,
+                forecast?.time || '--',
+                8, Drawing.COLORS.weatherSub, false, 'center'
+            );
+            if (forecast?.iconPath) {
+                Drawing.drawImage(cr, forecast.iconPath, centerX - 10, 161, 20);
+            }
+            Drawing.drawText(
+                cr, centerX, 194,
+                forecast ? `${forecast.temp}°` : '--',
+                9, Drawing.COLORS.white, true, 'center'
+            );
         }
+
+        cr.setSourceRGBA(1, 1, 1, 0.10);
+        cr.moveTo(20, 204);
+        cr.lineTo(width - 20, 204);
+        cr.stroke();
+        Drawing.drawText(
+            cr, 20, 221,
+            `${textFor(language, 'Cảm giác', 'Feels')} ${d.feels || '--'}°  ·  ${textFor(language, 'Ẩm', 'Humidity')} ${d.humidity || '--'}%`,
+            8, Drawing.COLORS.weatherMuted, false
+        );
+        Drawing.drawText(
+            cr, width - 20, 221,
+            `${textFor(language, 'Gió', 'Wind')} ${d.wind || '--'} km/h`,
+            8, Drawing.COLORS.weatherMuted, false, 'right'
+        );
     }
 
     destroy() {

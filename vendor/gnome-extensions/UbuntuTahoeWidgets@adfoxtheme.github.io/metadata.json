@@ -1,6 +1,6 @@
 {
   "name": "UbuntuTahoeWidgets",
-  "description": "macOS Tahoe-style desktop widgets for GNOME Shell: clock, weather, system monitor, lunar calendar, and break reminders",
+  "description": "macOS Tahoe-style desktop widgets for GNOME Shell: clock, hourly weather, system monitor, lunar and Gregorian calendars, and break reminders",
   "uuid": "UbuntuTahoeWidgets@adfoxtheme.github.io",
   "settings-schema": "org.gnome.shell.extensions.ubuntutahoewidgets",
   "shell-version": [
@@ -13,5 +13,5 @@
     "51"
   ],
   "url": "https://github.com/adfoxtheme/mactahoe-ubuntu",
-  "version": 3
+  "version": 4
 }

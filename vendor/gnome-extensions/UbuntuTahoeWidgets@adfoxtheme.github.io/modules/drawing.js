@@ -62,6 +62,33 @@ export function drawCard(cr, x, y, w, h, r, top, bottom, border) {
     }
 }
 
+export function drawLiquidGlassCard(cr, x, y, w, h, r = 24) {
+    cr.setSourceRGBA(0.055, 0.065, 0.085, 0.58);
+    roundedPath(cr, x, y, w, h, r);
+    cr.fill();
+
+    cr.save();
+    roundedPath(cr, x, y, w, h, r);
+    cr.clip();
+    const reflection = new cairo.LinearGradient(x, y, x + w * 0.65, y + h * 0.7);
+    reflection.addColorStopRGBA(0, 1, 1, 1, 0.16);
+    reflection.addColorStopRGBA(0.45, 1, 1, 1, 0.035);
+    reflection.addColorStopRGBA(1, 1, 1, 1, 0);
+    cr.setSource(reflection);
+    cr.paint();
+    cr.restore();
+
+    cr.setSourceRGBA(1, 1, 1, 0.23);
+    cr.setLineWidth(1);
+    roundedPath(cr, x + 0.5, y + 0.5, w - 1, h - 1, r - 0.5);
+    cr.stroke();
+
+    cr.setSourceRGBA(1, 1, 1, 0.07);
+    cr.setLineWidth(1);
+    roundedPath(cr, x + 2, y + 2, w - 4, h - 4, r - 2);
+    cr.stroke();
+}
+
 export function drawText(cr, x, y, str, size, color, bold = false, align = 'left', family = 'SF Pro Text') {
     if (!str) return;
     cr.save();

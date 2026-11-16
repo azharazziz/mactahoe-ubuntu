@@ -3,6 +3,21 @@ import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import Soup from 'gi://Soup?version=3.0';
+
+const HOLIDAY_COUNTRY_FALLBACKS = [
+    { countryCode: 'VN', name: 'Vietnam' },
+    { countryCode: 'US', name: 'United States' },
+    { countryCode: 'GB', name: 'United Kingdom' },
+    { countryCode: 'ID', name: 'Indonesia' },
+    { countryCode: 'JP', name: 'Japan' },
+    { countryCode: 'AU', name: 'Australia' },
+    { countryCode: 'CA', name: 'Canada' },
+    { countryCode: 'FR', name: 'France' },
+    { countryCode: 'DE', name: 'Germany' },
+    { countryCode: 'SG', name: 'Singapore' },
+    { countryCode: 'TH', name: 'Thailand' },
+];
 
 export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -61,6 +76,7 @@ export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences 
         addSwitch(text('Thời tiết', 'Weather'), text('Dự báo nhiệt độ và thời tiết với icon MacTahoe', 'Show the temperature and weather forecast with MacTahoe icons'), 'show-weather');
         addSwitch(text('Hệ thống', 'System'), text('Giám sát CPU, GPU, RAM, SSD và mạng', 'Monitor CPU, GPU, RAM, storage, and network usage'), 'show-system');
         addSwitch(text('Âm lịch', 'Lunar calendar'), text('Lịch âm Việt Nam và can chi hôm nay', 'Vietnamese lunar date and Can Chi for today'), 'show-lunar');
+        addSwitch(text('Lịch Gregorian', 'Gregorian calendar'), text('Hiển thị lịch tháng và ngày lễ quốc gia', 'Show a monthly calendar and national public holidays'), 'show-calendar');
         addSwitch(text('Nhắc nghỉ', 'Break reminder'), text('Theo dõi thời gian và nhắc nhở nghỉ ngơi', 'Track uptime and remind you to take breaks'), 'show-rest');
 
         // Group 2: Weather settings
@@ -105,6 +121,70 @@ export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences 
         });
         settings.bind('weather-update-interval', intervalRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         weatherGroup.add(intervalRow);
+
+        const calendarGroup = new Adw.PreferencesGroup({
+            title: text('Lịch Gregorian', 'Gregorian calendar'),
+            description: text(
+                'Pilih negara untuk menampilkan hari libur nasional. Data diambil dari layanan online gratis.',
+                'Choose a country for national public holidays. Data is retrieved from a free online service.'
+            ),
+        });
+        page.add(calendarGroup);
+
+        let countryOptions = [...HOLIDAY_COUNTRY_FALLBACKS];
+        const selectedCountry = settings.get_string('holiday-country') || 'VN';
+        if (!countryOptions.some(country => country.countryCode === selectedCountry)) {
+            countryOptions.unshift({ countryCode: selectedCountry, name: selectedCountry });
+        }
+        const countryRow = new Adw.ComboRow({
+            title: text('Negara hari libur', 'Holiday country'),
+            model: Gtk.StringList.new(countryOptions.map(country => `${country.name} (${country.countryCode})`)),
+        });
+        countryRow.selected = Math.max(0, countryOptions.findIndex(country => country.countryCode === selectedCountry));
+        let syncingCountrySelection = false;
+        countryRow.connect('notify::selected', () => {
+            if (syncingCountrySelection) return;
+            const country = countryOptions[countryRow.selected];
+            if (country && settings.get_string('holiday-country') !== country.countryCode)
+                settings.set_string('holiday-country', country.countryCode);
+        });
+        calendarGroup.add(countryRow);
+
+        const countrySession = new Soup.Session();
+        const countryMessage = Soup.Message.new('GET', 'https://date.nager.at/api/v3/AvailableCountries');
+        countryMessage.request_headers.append('User-Agent', 'UbuntuTahoeWidgets/1.0');
+        countrySession.send_and_read_async(countryMessage, GLib.PRIORITY_DEFAULT, null, (source, result) => {
+            try {
+                const bytes = countrySession.send_and_read_finish(result);
+                if (countryMessage.status_code !== 200)
+                    throw new Error(`HTTP ${countryMessage.status_code}`);
+                const countries = JSON.parse(new TextDecoder('utf-8').decode(bytes.toArray()));
+                if (!Array.isArray(countries) || countries.length === 0)
+                    throw new Error('Invalid available countries response');
+                countryOptions = countries
+                    .filter(country => country.countryCode && country.name)
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                const currentCode = settings.get_string('holiday-country') || 'VN';
+                if (!countryOptions.some(country => country.countryCode === currentCode)) {
+                    countryOptions.unshift(
+                        HOLIDAY_COUNTRY_FALLBACKS.find(country => country.countryCode === currentCode) ||
+                        { countryCode: currentCode, name: currentCode }
+                    );
+                }
+                const index = countryOptions.findIndex(country => country.countryCode === currentCode);
+                syncingCountrySelection = true;
+                try {
+                    countryRow.model = Gtk.StringList.new(
+                        countryOptions.map(country => `${country.name} (${country.countryCode})`)
+                    );
+                    countryRow.selected = Math.max(0, index);
+                } finally {
+                    syncingCountrySelection = false;
+                }
+            } catch (error) {
+                console.warn('[UbuntuTahoeWidgets] Could not load holiday countries:', error);
+            }
+        });
 
         const modeGroup = new Adw.PreferencesGroup({
             title: text('Chế độ vị trí', 'Position mode'),
@@ -171,6 +251,8 @@ export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences 
         addSpin(individualPositionGroup, text('Hệ thống - khoảng cách Y từ trên (px)', 'System - top Y margin (px)'), 'widget-system-y', 0, 5000, 10);
         addSpin(individualPositionGroup, text('Lịch âm - khoảng cách X từ phải (px)', 'Lunar calendar - right X margin (px)'), 'widget-lunar-x', 0, 5000, 10);
         addSpin(individualPositionGroup, text('Lịch âm - khoảng cách Y từ trên (px)', 'Lunar calendar - top Y margin (px)'), 'widget-lunar-y', 0, 5000, 10);
+        addSpin(individualPositionGroup, text('Lịch Gregorian - khoảng cách X từ phải (px)', 'Gregorian calendar - right X margin (px)'), 'widget-calendar-x', 0, 5000, 10);
+        addSpin(individualPositionGroup, text('Lịch Gregorian - khoảng cách Y từ trên (px)', 'Gregorian calendar - top Y margin (px)'), 'widget-calendar-y', 0, 5000, 10);
         addSpin(individualPositionGroup, text('Nhắc nghỉ - khoảng cách X từ phải (px)', 'Break reminder - right X margin (px)'), 'widget-rest-x', 0, 5000, 10);
         addSpin(individualPositionGroup, text('Nhắc nghỉ - khoảng cách Y từ trên (px)', 'Break reminder - top Y margin (px)'), 'widget-rest-y', 0, 5000, 10);
 

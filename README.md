@@ -27,7 +27,7 @@ A macOS Tahoe-inspired desktop theme and a set of custom GNOME extensions and ap
 
 The GTK and Shell themes, icons, cursor, SF fonts, and wallpapers provide the core appearance. The top bar is transparent through the Shell CSS and does not require blur. Firefox receives rounded window corners and a Safari-inspired theme.
 
-UbuntuTahoe combines the global menu, right-aligned clock, overview and app-folder blur, and input method panel. UbuntuTahoeDock provides a floating bottom dock with smart auto-hide and adjustable icon size. UbuntuTahoeWidgets provides desktop clock, weather, system, lunar calendar, and break-reminder widgets. The clipboard and Spotlight extensions are also included.
+UbuntuTahoe combines the global menu, right-aligned clock, overview and app-folder blur, and input method panel. UbuntuTahoeDock provides a floating bottom dock with smart auto-hide and adjustable icon size. UbuntuTahoeWidgets provides desktop clock, hourly weather, system, lunar and Gregorian calendar, and break-reminder widgets. Its cards use a Liquid Glass-inspired translucent tint, highlights, and borders (without backdrop blur). The Gregorian calendar can show public holidays for a selected country using the online Nager.Date service; an internet connection is required. The clipboard and Spotlight extensions are also included.
 
 GNOME Tweaks and Extension Manager are optional configuration tools, not theme components. The project also includes a MacTahoe icon manager, Vietnamese lunar calendar, image compressor, and browser theme manager. The calendar works offline; image compression is performed locally with Pillow.
 
@@ -78,8 +78,8 @@ cd "$HOME/mactahoe-ubuntu" && ./install-gdm.sh
 Open **Extension Manager** or **Extensions** to configure the custom extensions.
 
 - **UbuntuTahoeDock:** choose whether the dock hides when windows are maximized, is always hidden, or is always visible; adjust the icon size.
-- **UbuntuTahoeWidgets:** enable or disable individual widgets, configure the OpenWeather API key and city, set the refresh interval, and adjust widget margins. Use the language row to select the system default, Vietnamese, or English.
-- **UbuntuTahoeSpotlight:** press <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd> to search for applications, perform calculations, and run system actions.
+- **UbuntuTahoeWidgets:** enable or disable individual widgets, configure the OpenWeather API key and city, set the refresh interval, select a country for Gregorian calendar public holidays, and adjust widget margins and individual positions. Use the language row to select the system default, Vietnamese, or English.
+- **UbuntuTahoeSpotlight:** configure its keyboard shortcut in the extension preferences (default: <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd>); use it to search for applications, perform calculations, and run system actions.
 - **UbuntuTahoeGlass:** optional GPU shader effects for the dock, application windows, and Quick Settings. Enable the extension before opening its preferences.
 - **UbuntuTahoeClipboard:** clipboard history with up to 20 items; press <kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>Space</kbd>.
 

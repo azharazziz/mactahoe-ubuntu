@@ -50,6 +50,14 @@ function mapOpenWeatherIcon(iconCode, conditionId) {
     return isNight ? 'weather-overcast-night' : 'weather-overcast';
 }
 
+function formatForecastTime(hour, language) {
+    const time = new Date(2024, 0, 1, hour);
+    return new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', {
+        hour: 'numeric',
+        hour12: language === 'en',
+    }).format(time);
+}
+
 const WMO_CODES = {
     0: ['Trời quang', 'weather-clear', 'weather-clear-night'],
     1: ['Ít mây', 'weather-few-clouds', 'weather-few-clouds-night'],
@@ -135,6 +143,23 @@ export async function fetchWeather(settings) {
         try {
             const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=${language}`;
             const data = await sendGetRequest(url);
+            let hourlyForecast = [];
+            try {
+                const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=${language}`;
+                const forecastData = await sendGetRequest(forecastUrl);
+                const timezoneOffset = forecastData.city?.timezone || 0;
+                hourlyForecast = (forecastData.list || []).slice(0, 6).map(item => {
+                    const forecastTime = new Date((item.dt + timezoneOffset) * 1000);
+                    const weather = item.weather?.[0];
+                    return {
+                        time: formatForecastTime(forecastTime.getUTCHours(), language),
+                        temp: `${Math.round(item.main.temp)}`,
+                        iconPath: getIconPath(mapOpenWeatherIcon(weather?.icon, weather?.id)),
+                    };
+                });
+            } catch (err) {
+                console.warn('[UbuntuTahoeWidgets] OpenWeather hourly forecast failed:', err.message);
+            }
 
             const temp = Math.round(data.main.temp);
             const high = Math.round(data.main.temp_max);
@@ -164,6 +189,7 @@ export async function fetchWeather(settings) {
                 wind: `${wind}`,
                 condition,
                 iconPath: getIconPath(iconName),
+                hourlyForecast,
             };
         } catch (err) {
             console.warn('[UbuntuTahoeWidgets] OpenWeather failed, falling back to Open-Meteo:', err.message);
@@ -171,12 +197,34 @@ export async function fetchWeather(settings) {
     }
 
     // 2. Fallback to Open-Meteo
+    let weatherLat = lat;
+    let weatherLon = lon;
+    const usesDefaultCoordinates = Math.abs(lat - 21.0285) < 0.0001 && Math.abs(lon - 105.8542) < 0.0001;
+    let weatherCity = usesDefaultCoordinates ? 'Hà Nội' : city;
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FHo_Chi_Minh`;
+        if (usesDefaultCoordinates) {
+            try {
+                const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${language}&format=json`;
+                const geocodeData = await sendGetRequest(geocodeUrl);
+                const location = geocodeData.results?.[0];
+                if (location) {
+                    weatherLat = location.latitude;
+                    weatherLon = location.longitude;
+                    weatherCity = location.name || city;
+                } else {
+                    console.warn(`[UbuntuTahoeWidgets] No geocoding results for ${city}; using configured coordinates.`);
+                }
+            } catch (err) {
+                console.warn('[UbuntuTahoeWidgets] City geocoding failed; using configured coordinates:', err.message);
+            }
+        }
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
         const data = await sendGetRequest(url);
 
         const current = data.current;
         const daily = data.daily;
+        const hourly = data.hourly || {};
 
         const temp = Math.round(current.temperature_2m);
         const feels = Math.round(current.apparent_temperature);
@@ -193,14 +241,28 @@ export async function fetchWeather(settings) {
         }
 
         const code = current.weather_code || 0;
-        const hour = now.getHours();
+        const currentHour = `${current.time || ''}`.slice(0, 13);
+        const localHour = currentHour ? Number(currentHour.slice(11, 13)) : Number.NaN;
+        const hour = Number.isFinite(localHour) ? localHour : now.getHours();
         const isNight = hour < 6 || hour >= 18;
         const entry = WMO_CODES[code] || ['Thời tiết tốt', 'weather-few-clouds', 'weather-few-clouds-night'];
         const condition = language === 'vi' ? entry[0] : (WMO_CODES_EN[code] || 'Fair weather');
         const iconName = isNight ? entry[2] : entry[1];
+        const startIndex = Math.max(0, (hourly.time || []).findIndex(time => time >= currentHour));
+        const hourlyForecast = (hourly.time || []).slice(startIndex, startIndex + 6).map((time, index) => {
+            const forecastCode = hourly.weather_code?.[startIndex + index] || 0;
+            const forecastEntry = WMO_CODES[forecastCode] || WMO_CODES[0];
+            const forecastHour = Number(time.slice(11, 13));
+            const forecastNight = forecastHour < 6 || forecastHour >= 18;
+            return {
+                time: formatForecastTime(forecastHour, language),
+                temp: `${Math.round(hourly.temperature_2m?.[startIndex + index] ?? temp)}`,
+                iconPath: getIconPath(forecastNight ? forecastEntry[2] : forecastEntry[1]),
+            };
+        });
 
         return {
-            city,
+            city: weatherCity,
             date: dateLabel,
             temp: `${temp}`,
             high: `${high}`,
@@ -210,11 +272,12 @@ export async function fetchWeather(settings) {
             wind: `${wind}`,
             condition,
             iconPath: getIconPath(iconName),
+            hourlyForecast,
         };
     } catch (err) {
         console.error('[UbuntuTahoeWidgets] Open-Meteo fallback also failed:', err);
         return {
-            city,
+            city: weatherCity,
             date: dateLabel,
             temp: '--',
             high: '--',
@@ -224,6 +287,7 @@ export async function fetchWeather(settings) {
             wind: '--',
             condition: language === 'vi' ? 'Chưa có mạng' : 'No network connection',
             iconPath: getIconPath('weather-few-clouds'),
+            hourlyForecast: [],
         };
     }
 }

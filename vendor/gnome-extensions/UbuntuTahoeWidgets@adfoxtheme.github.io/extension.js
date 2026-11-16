@@ -7,6 +7,7 @@ import { ClockWidget } from './modules/clockWidget.js';
 import { WeatherWidget } from './modules/weatherWidget.js';
 import { SystemWidget } from './modules/systemWidget.js';
 import { LunarWidget } from './modules/lunarWidget.js';
+import { CalendarWidget } from './modules/calendarWidget.js';
 import { RestWidget } from './modules/restWidget.js';
 
 export default class UbuntuTahoeWidgetsExtension extends Extension {
@@ -43,7 +44,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
                     mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                 });
             }
-            for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._restWidget]) {
+            for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._calendarWidget, this._restWidget]) {
                 if (!widget) continue;
                 widget.ease({
                     opacity: 0,
@@ -61,7 +62,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
                     mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                 });
             }
-            for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._restWidget]) {
+            for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._calendarWidget, this._restWidget]) {
                 if (!widget) continue;
                 widget.ease({
                     opacity: 255,
@@ -77,6 +78,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
             this._settings.connect('changed::show-weather', () => this._rebuildAndRelayout()),
             this._settings.connect('changed::show-system', () => this._rebuildAndRelayout()),
             this._settings.connect('changed::show-lunar', () => this._rebuildAndRelayout()),
+            this._settings.connect('changed::show-calendar', () => this._rebuildAndRelayout()),
             this._settings.connect('changed::show-rest', () => this._rebuildAndRelayout()),
             this._settings.connect('changed::position-mode', () => {
                 this._updateWidgetParents();
@@ -94,12 +96,15 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
             this._settings.connect('changed::widget-system-y', () => this._relayout()),
             this._settings.connect('changed::widget-lunar-x', () => this._relayout()),
             this._settings.connect('changed::widget-lunar-y', () => this._relayout()),
+            this._settings.connect('changed::widget-calendar-x', () => this._relayout()),
+            this._settings.connect('changed::widget-calendar-y', () => this._relayout()),
             this._settings.connect('changed::widget-rest-x', () => this._relayout()),
             this._settings.connect('changed::widget-rest-y', () => this._relayout()),
             this._settings.connect('changed::ui-language', () => {
                 this._weatherWidget?.refreshWeather();
                 this._systemWidget?.queue_repaint();
                 this._lunarWidget?.queue_repaint();
+                this._calendarWidget?.queue_repaint();
                 this._restWidget?.queue_repaint();
             }),
         ];
@@ -116,7 +121,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
         const individual = this._settings.get_string('position-mode') === 'individual';
         this._stackBox.visible = !individual;
 
-        for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._restWidget]) {
+        for (const widget of [this._weatherWidget, this._systemWidget, this._lunarWidget, this._calendarWidget, this._restWidget]) {
             if (!widget) continue;
 
             const parent = widget.get_parent();
@@ -140,7 +145,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
             this._clockWidget = null;
         }
 
-        // Stack items in order: Weather, System, Lunar, Rest
+        // Stack items in order: Weather, System, Lunar, Calendar, Rest
         // 1. Weather
         if (this._settings.get_boolean('show-weather')) {
             if (!this._weatherWidget) {
@@ -174,7 +179,18 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
             this._lunarWidget = null;
         }
 
-        // 4. Rest
+        // 4. Gregorian Calendar
+        if (this._settings.get_boolean('show-calendar')) {
+            if (!this._calendarWidget) {
+                this._calendarWidget = new CalendarWidget(this._settings);
+                this._addCardWidget(this._calendarWidget);
+            }
+        } else if (this._calendarWidget) {
+            this._calendarWidget.destroy();
+            this._calendarWidget = null;
+        }
+
+        // 5. Rest
         if (this._settings.get_boolean('show-rest')) {
             if (!this._restWidget) {
                 this._restWidget = new RestWidget(this._settings);
@@ -211,6 +227,7 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
                 [this._weatherWidget, 'widget-weather-x', 'widget-weather-y'],
                 [this._systemWidget, 'widget-system-x', 'widget-system-y'],
                 [this._lunarWidget, 'widget-lunar-x', 'widget-lunar-y'],
+                [this._calendarWidget, 'widget-calendar-x', 'widget-calendar-y'],
                 [this._restWidget, 'widget-rest-x', 'widget-rest-y'],
             ];
             for (const [widget, xKey, yKey] of widgetPositions) {
@@ -271,6 +288,10 @@ export default class UbuntuTahoeWidgetsExtension extends Extension {
         if (this._lunarWidget) {
             this._lunarWidget.destroy();
             this._lunarWidget = null;
+        }
+        if (this._calendarWidget) {
+            this._calendarWidget.destroy();
+            this._calendarWidget = null;
         }
         if (this._restWidget) {
             this._restWidget.destroy();

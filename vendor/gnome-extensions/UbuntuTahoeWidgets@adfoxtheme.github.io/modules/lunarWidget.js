@@ -50,13 +50,7 @@ class LunarWidget extends St.DrawingArea {
         const height = 150;
         const l = this._lunar;
 
-        // Card background
-        Drawing.drawCard(
-            cr, 0, 0, width, height, 24,
-            [0.19, 0.14, 0.31, 0.97],
-            [0.075, 0.065, 0.12, 0.98],
-            0.16
-        );
+        Drawing.drawLiquidGlassCard(cr, 0, 0, width, height, 24);
 
         // Crescent moon watermark in top right
         Drawing.drawMoonWatermark(cr, width - 30, 39, 30);

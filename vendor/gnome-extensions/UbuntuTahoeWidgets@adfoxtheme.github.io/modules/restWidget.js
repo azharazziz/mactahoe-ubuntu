@@ -54,27 +54,18 @@ class RestWidget extends St.DrawingArea {
         const onBreak = cycle >= 3000;
         const language = getLanguage(this._settings);
 
-        let accent, top, bottom;
+        let accent;
         if (onBreak) {
             accent = Drawing.COLORS.green;
-            top = [0.08, 0.34, 0.28, 0.97];
-            bottom = [0.045, 0.15, 0.16, 0.98];
         } else if (cycle >= 2700) {
             accent = Drawing.COLORS.orange;
-            top = [0.39, 0.20, 0.10, 0.97];
-            bottom = [0.17, 0.09, 0.08, 0.98];
         } else if (cycle >= 2100) {
             accent = Drawing.COLORS.gold;
-            top = [0.34, 0.27, 0.10, 0.97];
-            bottom = [0.15, 0.12, 0.07, 0.98];
         } else {
             accent = Drawing.COLORS.cyan;
-            top = [0.10, 0.25, 0.38, 0.97];
-            bottom = [0.055, 0.10, 0.18, 0.98];
         }
 
-        // Card background
-        Drawing.drawCard(cr, 0, 0, width, height, 24, top, bottom, 0.22);
+        Drawing.drawLiquidGlassCard(cr, 0, 0, width, height, 24);
 
         // Watermark clock in top right
         Drawing.drawRestClockWatermark(cr, width - 40, 42, 30);
