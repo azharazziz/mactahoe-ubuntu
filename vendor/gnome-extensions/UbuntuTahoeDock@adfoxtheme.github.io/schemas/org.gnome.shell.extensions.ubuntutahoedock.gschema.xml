@@ -1,4 +1,4 @@
-ka<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-shell-extensions">
   <enum id='org.gnome.shell.extensions.ubuntutahoedock.clickAction'>
     <value value='0' nick='skip'/>
