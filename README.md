@@ -77,7 +77,7 @@ cd "$HOME/mactahoe-ubuntu" && ./install-gdm.sh
 
 Open **Extension Manager** or **Extensions** to configure the custom extensions.
 
-- **UbuntuTahoeDock:** choose whether the dock hides when windows are maximized, is always hidden, or is always visible; adjust the icon size.
+- **UbuntuTahoeDock:** choose whether the dock hides when windows are maximized, is always hidden, or is always visible; adjust the icon size. Hover over an app with multiple open windows for a preview, then click a thumbnail to switch to that window.
 - **UbuntuTahoeWidgets:** enable or disable individual widgets, configure the OpenWeather API key and city, set the refresh interval, select a country for Gregorian calendar public holidays, and adjust widget margins and individual positions. Use the language row to select the system default, Vietnamese, or English.
 - **UbuntuTahoeSpotlight:** configure its keyboard shortcut in the extension preferences (default: <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd>); use it to search for applications, perform calculations, and run system actions.
 - **UbuntuTahoeGlass:** optional GPU shader effects for the dock, application windows, and Quick Settings. Enable the extension before opening its preferences.

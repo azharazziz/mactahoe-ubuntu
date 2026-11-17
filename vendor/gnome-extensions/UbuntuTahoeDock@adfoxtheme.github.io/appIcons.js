@@ -74,6 +74,7 @@ const scrollAction = Object.freeze({
 
 // module "Dash" did not export DASH_ITEM_LABEL_SHOW_TIME, so let's define it.
 const DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME ?? 150;
+const HOVER_PREVIEW_DELAY = 400;
 
 let recentlyClickedAppLoopId = 0;
 let recentlyClickedApp = null;
@@ -207,6 +208,9 @@ export const DockAbstractAppIcon = GObject.registerClass({
 
         this._progressOverlayArea = null;
         this._progress = 0;
+        this._hoverPreviewTimeoutId = 0;
+        this._signalsHandler.add(
+            this, 'notify::hover', this._onHoverChanged.bind(this));
 
         [
             'apply-custom-theme',
@@ -237,6 +241,11 @@ export const DockAbstractAppIcon = GObject.registerClass({
     }
 
     _onDestroy() {
+        if (this._hoverPreviewTimeoutId) {
+            GLib.source_remove(this._hoverPreviewTimeoutId);
+            this._hoverPreviewTimeoutId = 0;
+        }
+
         super._onDestroy();
 
         // This is necessary due to an upstream bug
@@ -755,6 +764,31 @@ export const DockAbstractAppIcon = GObject.registerClass({
             this._previewMenu.popup();
 
         return false;
+    }
+
+    _onHoverChanged() {
+        if (!this.hover) {
+            if (this._hoverPreviewTimeoutId) {
+                GLib.source_remove(this._hoverPreviewTimeoutId);
+                this._hoverPreviewTimeoutId = 0;
+            }
+            return;
+        }
+
+        if (this._hoverPreviewTimeoutId || this._previewMenu?.isOpen)
+            return;
+
+        this._hoverPreviewTimeoutId = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT, HOVER_PREVIEW_DELAY, () => {
+                this._hoverPreviewTimeoutId = 0;
+                if (!this.hover || Main.overview.visible || this._menu?.isOpen ||
+                    this.getInterestingWindows().length < 2) {
+                    return GLib.SOURCE_REMOVE;
+                }
+
+                this._windowPreviews();
+                return GLib.SOURCE_REMOVE;
+            });
     }
 
     // Try to do the right thing when attempting to launch a new window of an app. In
