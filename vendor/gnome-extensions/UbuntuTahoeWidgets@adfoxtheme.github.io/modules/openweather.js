@@ -3,6 +3,8 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 
 const session = new Soup.Session();
+const AUTO_LOCATION_CACHE_MS = 6 * 60 * 60 * 1000;
+let cachedAutoLocation = null;
 
 const ICON_BASE = GLib.get_home_dir() + '/.local/share/icons/MacTahoe-blue/status/32/';
 
@@ -128,9 +130,32 @@ function sendGetRequest(url) {
     });
 }
 
+async function detectLocation() {
+    if (cachedAutoLocation && cachedAutoLocation.expiresAt > Date.now())
+        return cachedAutoLocation.location;
+
+    const data = await sendGetRequest('https://ipapi.co/json/');
+    const latitude = Number(data.latitude);
+    const longitude = Number(data.longitude);
+    if (data.error || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) || longitude < -180 || longitude > 180)
+        throw new Error('Location service returned invalid coordinates');
+
+    const location = {
+        latitude,
+        longitude,
+        city: typeof data.city === 'string' && data.city.trim() ? data.city.trim() : '',
+    };
+    cachedAutoLocation = {
+        location,
+        expiresAt: Date.now() + AUTO_LOCATION_CACHE_MS,
+    };
+    return location;
+}
+
 export async function fetchWeather(settings) {
     const apiKey = (settings.weatherApiKey || '').trim();
-    const city = (settings.weatherCity || 'Hà Nội').trim();
+    const city = (settings.weatherCity || '').trim();
     const language = settings.language === 'en' ? 'en' : 'vi';
     const lat = settings.weatherLat || 21.0285;
     const lon = settings.weatherLon || 105.8542;
@@ -138,14 +163,26 @@ export async function fetchWeather(settings) {
     const now = new Date();
     const dateLabel = `${new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'long' }).format(now)}, ${now.getDate()}/${now.getMonth() + 1}`;
 
+    let autoLocation = null;
+    if (!city) {
+        try {
+            autoLocation = await detectLocation();
+        } catch (err) {
+            console.warn('[UbuntuTahoeWidgets] Automatic location detection failed; using the configured fallback location:', err.message);
+        }
+    }
+
     // 1. If OpenWeather API key is provided, try OpenWeatherMap
     if (apiKey.length > 0) {
         try {
-            const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=${language}`;
+            const locationQuery = autoLocation
+                ? `lat=${autoLocation.latitude}&lon=${autoLocation.longitude}`
+                : `q=${encodeURIComponent(city || 'Hà Nội')}`;
+            const url = `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${apiKey}&units=metric&lang=${language}`;
             const data = await sendGetRequest(url);
             let hourlyForecast = [];
             try {
-                const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=${language}`;
+                const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?${locationQuery}&appid=${apiKey}&units=metric&lang=${language}`;
                 const forecastData = await sendGetRequest(forecastUrl);
                 const timezoneOffset = forecastData.city?.timezone || 0;
                 hourlyForecast = (forecastData.list || []).slice(0, 6).map(item => {
@@ -179,7 +216,7 @@ export async function fetchWeather(settings) {
             }
 
             return {
-                city: data.name || city,
+                city: data.name || autoLocation?.city || city || 'Hà Nội',
                 date: dateLabel,
                 temp: `${temp}`,
                 high: `${high}`,
@@ -197,12 +234,12 @@ export async function fetchWeather(settings) {
     }
 
     // 2. Fallback to Open-Meteo
-    let weatherLat = lat;
-    let weatherLon = lon;
+    let weatherLat = autoLocation?.latitude ?? lat;
+    let weatherLon = autoLocation?.longitude ?? lon;
     const usesDefaultCoordinates = Math.abs(lat - 21.0285) < 0.0001 && Math.abs(lon - 105.8542) < 0.0001;
-    let weatherCity = usesDefaultCoordinates ? 'Hà Nội' : city;
+    let weatherCity = autoLocation?.city || (usesDefaultCoordinates ? 'Hà Nội' : city);
     try {
-        if (usesDefaultCoordinates) {
+        if (!autoLocation && city && usesDefaultCoordinates) {
             try {
                 const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${language}&format=json`;
                 const geocodeData = await sendGetRequest(geocodeUrl);

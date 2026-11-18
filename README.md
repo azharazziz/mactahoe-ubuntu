@@ -19,7 +19,7 @@ A macOS Tahoe-inspired desktop theme and a set of custom GNOME extensions and ap
 
 - `vendor/MacTahoe-gtk-theme/` and `vendor/MacTahoe-icon-theme/`: bundled theme sources.
 - `assets/fonts/`, `assets/wallpapers/`, and `assets/screenshots/`: fonts, wallpapers, and project screenshots.
-- `apps/`: GTK4 applications for icon management, the Vietnamese lunar calendar, image compression, and browser theming.
+- `apps/`: GTK4 applications for icon management, optional Vietnamese lunar calendar, image compression, and browser theming.
 - `desktop/`: desktop launchers for the applications.
 - `vendor/gnome-extensions/`: UbuntuTahoe, UbuntuTahoeDock, UbuntuTahoeWidgets, UbuntuTahoeClipboard, UbuntuTahoeSpotlight, and the optional UbuntuTahoeGlass extension.
 - `config/gsettings.tsv` and `config/firefox-user.js`: GNOME and Firefox settings used by the installer.
@@ -29,7 +29,7 @@ The GTK and Shell themes, icons, cursor, SF fonts, and wallpapers provide the co
 
 UbuntuTahoe combines the global menu, right-aligned clock, overview and app-folder blur, and input method panel. UbuntuTahoeDock provides a floating bottom dock with smart auto-hide and adjustable icon size. UbuntuTahoeWidgets provides desktop clock, hourly weather, system, lunar and Gregorian calendar, and break-reminder widgets. Its cards use a Liquid Glass-inspired translucent tint, highlights, and borders (without backdrop blur). The Gregorian calendar can show public holidays for a selected country using the online Nager.Date service; an internet connection is required. The clipboard and Spotlight extensions are also included.
 
-GNOME Tweaks and Extension Manager are optional configuration tools, not theme components. The project also includes a MacTahoe icon manager, Vietnamese lunar calendar, image compressor, and browser theme manager. The calendar works offline; image compression is performed locally with Pillow.
+GNOME Tweaks and Extension Manager are optional configuration tools, not theme components. The project also includes a MacTahoe icon manager, optional Vietnamese lunar calendar, image compressor, and browser theme manager. The installer asks whether to install the Vietnamese lunar calendar; choose `y` to include it or press Enter to skip it. The calendar works offline; image compression is performed locally with Pillow.
 
 Custom extension settings for Dock, Widgets, and Liquid Glass support **System default**, **Tiếng Việt**, and **English**. The initial setting follows the system locale. The widget labels and weather information follow the selected language. Other bundled extension UI and application interfaces are in English.
 
@@ -78,7 +78,7 @@ cd "$HOME/mactahoe-ubuntu" && ./install-gdm.sh
 Open **Extension Manager** or **Extensions** to configure the custom extensions.
 
 - **UbuntuTahoeDock:** choose whether the dock hides when windows are maximized, is always hidden, or is always visible; adjust the icon size. Hover over an app with multiple open windows for a preview, then click a thumbnail to switch to that window.
-- **UbuntuTahoeWidgets:** enable or disable individual widgets, configure the OpenWeather API key and city, set the refresh interval, select a country for Gregorian calendar public holidays, and adjust widget margins and individual positions. Use the language row to select the system default, Vietnamese, or English.
+- **UbuntuTahoeWidgets:** enable or disable individual widgets, configure the optional OpenWeather API key, set a city override (leave it blank to detect location from your public IP), choose the refresh interval, select a country for Gregorian calendar public holidays, and adjust widget margins and individual positions. Use the language row to select the system default, Vietnamese, or English.
 - **UbuntuTahoeSpotlight:** configure its keyboard shortcut in the extension preferences (default: <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd>); use it to search for applications, perform calculations, and run system actions.
 - **UbuntuTahoeGlass:** optional GPU shader effects for the dock, application windows, and Quick Settings. Enable the extension before opening its preferences.
 - **UbuntuTahoeClipboard:** clipboard history with up to 20 items; press <kbd>Win</kbd> + <kbd>Alt</kbd> + <kbd>Space</kbd>.
@@ -91,10 +91,11 @@ Launch the applications from GNOME's app grid or from a terminal:
 
 ```bash
 mactahoe-icon-manager
-am-lich-viet-nam
 image-compressor
 mactahoe-app-themer
 ```
+
+If installed, launch the Vietnamese lunar calendar with `am-lich-viet-nam`.
 
 The UI is in English. Desktop launchers provide Vietnamese names and descriptions when the system locale is Vietnamese.
 

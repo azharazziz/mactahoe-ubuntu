@@ -43,9 +43,9 @@
       <description>OpenWeatherMap API key. Leave blank to use free Open-Meteo weather data.</description>
     </key>
     <key name="weather-city" type="s">
-      <default>"Hà Nội"</default>
+      <default>''</default>
       <summary>City</summary>
-      <description>City used for weather data (for example, Hanoi, Ho Chi Minh City, or Quy Nhon).</description>
+      <description>Optional city override for weather data. Leave blank to detect the approximate location from the public IP address.</description>
     </key>
     <key name="weather-lat" type="d">
       <default>21.0285</default>

@@ -41,10 +41,21 @@ else
         exit 1
     fi
 fi
+install_vietnamese_calendar=false
+calendar_prompted=false
 shell_major="$(gnome-shell --version | grep -oE '[0-9]+' | head -n1)"
 if [ -z "$shell_major" ] || [ "$shell_major" -lt 48 ]; then
     printf 'This installer requires GNOME Shell 48 or newer; detected %s.\n' "${shell_major:-unknown}" >&2
     exit 1
+fi
+if [ -t 0 ]; then
+    calendar_prompted=true
+    printf 'Install the optional Vietnamese lunar calendar app? [y/N] '
+    if IFS= read -r calendar_answer; then
+        case "$calendar_answer" in
+            y|Y|yes|YES|Yes) install_vietnamese_calendar=true ;;
+        esac
+    fi
 fi
 for firefox_process in firefox firefox-bin firefox-esr; do
     if pgrep -u "$UID" -x "$firefox_process" >/dev/null 2>&1; then
@@ -223,31 +234,48 @@ cp -a "$ROOT_DIR/assets/wallpapers/." "$HOME/Pictures/Wallpapers/MacTahoe/"
 
 cp "$ROOT_DIR/apps/color-scheme-sync.sh" "$HOME/.local/bin/"
 cp "$ROOT_DIR/apps/launchers/mactahoe-icon-manager" \
-    "$ROOT_DIR/apps/launchers/am-lich-viet-nam" \
     "$ROOT_DIR/apps/launchers/image-compressor" \
     "$ROOT_DIR/apps/launchers/mactahoe-app-themer" "$HOME/.local/bin/"
 chmod +x "$HOME/.local/bin/mactahoe-icon-manager" \
-    "$HOME/.local/bin/am-lich-viet-nam" "$HOME/.local/bin/image-compressor" \
+    "$HOME/.local/bin/image-compressor" \
     "$HOME/.local/bin/mactahoe-app-themer" \
     "$HOME/.local/bin/color-scheme-sync.sh"
 mkdir -p "$HOME/.local/share/mactahoe-apps/mactahoe-icon-manager" \
-    "$HOME/.local/share/mactahoe-apps/am-lich-viet-nam" \
     "$HOME/.local/share/mactahoe-apps/image-compressor" \
     "$HOME/.local/share/mactahoe-apps/mactahoe-app-themer"
 cp -a "$ROOT_DIR/apps/mactahoe-icon-manager/." \
     "$HOME/.local/share/mactahoe-apps/mactahoe-icon-manager/"
-cp -a "$ROOT_DIR/apps/am-lich-viet-nam/." \
-    "$HOME/.local/share/mactahoe-apps/am-lich-viet-nam/"
 cp -a "$ROOT_DIR/apps/image-compressor/." \
     "$HOME/.local/share/mactahoe-apps/image-compressor/"
 cp -a "$ROOT_DIR/apps/mactahoe-app-themer/." \
     "$HOME/.local/share/mactahoe-apps/mactahoe-app-themer/"
-cp "$ROOT_DIR/apps/am-lich-viet-nam/assets/vn.ihoan.AmLich.svg" \
-    "$HOME/.local/share/icons/hicolor/scalable/apps/"
 cp "$ROOT_DIR/apps/image-compressor/assets/vn.ihoan.ImageCompressor.svg" \
     "$HOME/.local/share/icons/hicolor/scalable/apps/"
 cp "$ROOT_DIR/apps/mactahoe-app-themer/assets/io.github.adfoxtheme.MacTahoeAppThemer.svg" \
     "$HOME/.local/share/icons/hicolor/scalable/apps/"
+if [ "$install_vietnamese_calendar" = true ]; then
+    cp "$ROOT_DIR/apps/launchers/am-lich-viet-nam" "$HOME/.local/bin/"
+    chmod +x "$HOME/.local/bin/am-lich-viet-nam"
+    mkdir -p "$HOME/.local/share/mactahoe-apps/am-lich-viet-nam"
+    cp -a "$ROOT_DIR/apps/am-lich-viet-nam/." \
+        "$HOME/.local/share/mactahoe-apps/am-lich-viet-nam/"
+    cp "$ROOT_DIR/apps/am-lich-viet-nam/assets/vn.ihoan.AmLich.svg" \
+        "$HOME/.local/share/icons/hicolor/scalable/apps/"
+elif [ "$calendar_prompted" = true ]; then
+    for relative in \
+        .local/bin/am-lich-viet-nam \
+        .local/share/applications/vn.ihoan.AmLich.desktop \
+        .local/share/mactahoe-apps/am-lich-viet-nam \
+        .local/share/icons/hicolor/scalable/apps/vn.ihoan.AmLich.svg; do
+        target="$HOME/$relative"
+        backup="$BACKUP_DIR/home/$relative"
+        rm -rf "$target"
+        if [ -e "$backup" ] || [ -L "$backup" ]; then
+            mkdir -p "$(dirname "$target")"
+            cp -a "$backup" "$target"
+        fi
+    done
+fi
 
 EXTENSION_IDS=(UbuntuTahoe@adfoxtheme.github.io UbuntuTahoeDock@adfoxtheme.github.io UbuntuTahoeWidgets@adfoxtheme.github.io UbuntuTahoeClipboard@adfoxtheme.github.io UbuntuTahoeSpotlight@adfoxtheme.github.io UbuntuTahoeGlass@adfoxtheme.github.io)
 COMPATIBLE_EXTENSION_IDS=()
@@ -345,9 +373,11 @@ PY
 sed "s|^Exec=mactahoe-icon-manager$|Exec=$HOME/.local/bin/mactahoe-icon-manager|" \
     "$ROOT_DIR/desktop/mactahoe-icon-manager.desktop" \
     > "$HOME/.local/share/applications/mactahoe-icon-manager.desktop"
-sed "s|^Exec=am-lich-viet-nam$|Exec=$HOME/.local/bin/am-lich-viet-nam|" \
-    "$ROOT_DIR/desktop/vn.ihoan.AmLich.desktop" \
-    > "$HOME/.local/share/applications/vn.ihoan.AmLich.desktop"
+if [ "$install_vietnamese_calendar" = true ]; then
+    sed "s|^Exec=am-lich-viet-nam$|Exec=$HOME/.local/bin/am-lich-viet-nam|" \
+        "$ROOT_DIR/desktop/vn.ihoan.AmLich.desktop" \
+        > "$HOME/.local/share/applications/vn.ihoan.AmLich.desktop"
+fi
 sed "s|^Exec=image-compressor$|Exec=$HOME/.local/bin/image-compressor|" \
     "$ROOT_DIR/desktop/vn.ihoan.ImageCompressor.desktop" \
     > "$HOME/.local/share/applications/vn.ihoan.ImageCompressor.desktop"

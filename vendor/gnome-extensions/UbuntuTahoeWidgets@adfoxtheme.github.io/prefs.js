@@ -81,10 +81,10 @@ export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences 
 
         // Group 2: Weather settings
         const weatherGroup = new Adw.PreferencesGroup({
-            title: text('Thời tiết (OpenWeatherMap)', 'Weather (OpenWeatherMap)'),
+            title: text('Thời tiết', 'Weather'),
             description: text(
-                'Cấu hình API OpenWeather (để trống sẽ dùng Open-Meteo miễn phí)',
-                'Configure an OpenWeather API key; leave it blank to use free Open-Meteo'
+                'Để trống tên thành phố để tự động xác định vị trí qua IP công khai (ipapi.co). Có thể nhập thành phố để ghi đè. API key OpenWeather không bắt buộc.',
+                'Leave the city blank to detect location from your public IP using ipapi.co. Enter a city to override it. An OpenWeather API key is optional.'
             ),
         });
         page.add(weatherGroup);
@@ -100,7 +100,7 @@ export default class UbuntuTahoeWidgetsPreferences extends ExtensionPreferences 
         weatherGroup.add(apiKeyRow);
 
         const cityRow = new Adw.EntryRow({
-            title: text('Tên thành phố', 'City'),
+            title: text('Thành phố (để trống = tự động)', 'City (blank = auto-detect)'),
             show_apply_button: true,
         });
         cityRow.text = settings.get_string('weather-city');

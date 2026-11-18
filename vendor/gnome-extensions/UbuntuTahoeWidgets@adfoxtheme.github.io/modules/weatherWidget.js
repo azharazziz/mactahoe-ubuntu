@@ -20,7 +20,7 @@ class WeatherWidget extends St.DrawingArea {
         this._settings = settings;
         const language = getLanguage(settings);
         this._weatherData = {
-            city: settings.get_string('weather-city') || 'Hà Nội',
+            city: settings.get_string('weather-city') || (language === 'vi' ? 'Đang xác định vị trí…' : 'Detecting location…'),
             date: language === 'vi' ? 'Đang tải…' : 'Loading…',
             temp: '--',
             high: '--',
